@@ -1,11 +1,12 @@
 import React, { Component } from 'react'
+import { compose } from 'redux'
+import { connect, ConnectedProps } from 'react-redux'
 import { withStyles, WithStyles, createStyles } from "@material-ui/core/styles"
 import { 
   Grid, 
   TextField, 
   InputAdornment, 
   Slider, 
-  Checkbox, 
   FormControlLabel, 
   FormControl, 
   FormGroup, 
@@ -57,19 +58,32 @@ const styles = createStyles({
   },
 })
 
-class IncomeForm extends Component<WithStyles<typeof styles>, {}> {
-  state = {
-    salary: 50000,
-    married: false,
-    taxRate: 25,
-    state: '',
-    deductions: 0,
-    stdDeduct: false,
-    retireContributions: 0,
-    retireRate: 0,
-    retireRateOf: 0,
-  }
+const mapStateToProps = (state: RootState) => ({
+  salary: state.salary,
+  married: state.married,
+  taxRate: state.taxRate,
+  state: state.state,
+  deductions: state.deductions,
+  stdDeduct: state.stdDeduct,
+  retireContributions: state.retireContributions,
+  retireRate: state.retireRate,
+  retireRateOf: state.retireRateOf,
+})
 
+
+const mapDispatchToProps = {
+  handleTextChange: () => ({ type: 'HANDLE_TEXT_CHANGE' }),
+  handleIncomeSliderChange: () => ({ type: 'HANDLE_INCOME_SLIDER_CHANGE' }),
+  handleMarriedChange: () => ({ type: 'HANDLE_MARRIED_CHANGE' }),
+  handleStdDeduct: () => ({ type: 'HANDLE_STD_DEDUCT_CHANGE' }),
+  handleStateChange: () => ({ type: 'HANDLE_STATE_CHANGE' }),
+}
+
+const connector = connect(mapStateToProps, mapDispatchToProps)
+type PropsFromRedux = ConnectedProps<typeof connector>
+type Props = PropsFromRedux & WithStyles<typeof styles>
+
+class IncomeForm extends Component<Props, {}> {
   private handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     let name = event.target.name;
     let value = event.target.value;
@@ -105,13 +119,13 @@ class IncomeForm extends Component<WithStyles<typeof styles>, {}> {
     const { classes } = this.props
 
     let {etr, netpay} = effectiveTaxFormula({
-      income: this.state.salary, 
-      state: this.state.state,
-      taxRate: this.state.taxRate,
-      deductions: this.state.deductions,
-      retireContributions: this.state.retireContributions,
-      retireRate: this.state.retireRate,
-      retireRateOf: this.state.retireRateOf,
+      income: this.props.salary, 
+      state: this.props.state,
+      taxRate: this.props.taxRate,
+      deductions: this.props.deductions,
+      retireContributions: this.props.retireContributions,
+      retireRate: this.props.retireRate,
+      retireRateOf: this.props.retireRateOf,
     })
 
     return (
@@ -121,8 +135,8 @@ class IncomeForm extends Component<WithStyles<typeof styles>, {}> {
         </Grid>
         <Grid item xs={12}>
           <TextField
-            value={this.state.salary}
-            onChange={this.handleTextChange}
+            value={this.props.salary}
+            onChange={this.props.handleTextChange}
             name="salary"
             label="Annual Household Income"
             className={classes.field}
@@ -138,8 +152,8 @@ class IncomeForm extends Component<WithStyles<typeof styles>, {}> {
         <Grid container spacing={3}>
           <Grid item xs={6}>
             <Slider
-              value={this.state.salary}
-              onChange={this.handleIncomeSliderChange}
+              value={this.props.salary}
+              onChange={this.props.handleIncomeSliderChange}
               min={0}
               max={1000000}
               step={10000}
@@ -148,7 +162,7 @@ class IncomeForm extends Component<WithStyles<typeof styles>, {}> {
           </Grid>
           <Grid item xs={6}>
             <FormControl component="fieldset">
-              <RadioGroup row onChange={this.handleMarriedChange} value={this.state.married ? "married" : "single"}>
+              <RadioGroup row onChange={this.props.handleMarriedChange} value={this.props.married ? "married" : "single"}>
                 <FormControlLabel
                   value="single"
                   control={<Radio color="primary" />}
@@ -168,8 +182,8 @@ class IncomeForm extends Component<WithStyles<typeof styles>, {}> {
         <Grid item xs={12}>
           <TextField
             label="Deductions"
-            value={this.state.deductions}
-            onChange={this.handleTextChange}
+            value={this.props.deductions}
+            onChange={this.props.handleTextChange}
             name="deductions"
             className={classes.field}
             InputProps={{startAdornment: <InputAdornment position="start">$</InputAdornment>}}
@@ -182,7 +196,7 @@ class IncomeForm extends Component<WithStyles<typeof styles>, {}> {
         <Grid item xs={12}>
           <FormGroup row>
             <FormControlLabel
-              control={<Switch color="primary" checked={this.state.stdDeduct} onChange={this.handleStdDeduct} />}
+              control={<Switch color="primary" checked={this.props.stdDeduct} onChange={this.props.handleStdDeduct} />}
               label="Use Standard Deductions"
             />
           </FormGroup>
@@ -190,8 +204,8 @@ class IncomeForm extends Component<WithStyles<typeof styles>, {}> {
         <Grid container spacing={1}>
           <Grid item xs={5}>
             <TextField
-              value={this.state.retireContributions}
-              onChange={this.handleTextChange}
+              value={this.props.retireContributions}
+              onChange={this.props.handleTextChange}
               name="retireContributions"
               label="Retirement Contributions"
               className={classes.field}
@@ -206,8 +220,8 @@ class IncomeForm extends Component<WithStyles<typeof styles>, {}> {
           </Grid><Grid item xs={1}></Grid>
           <Grid item xs={3}>
             <TextField
-              value={this.state.retireRate}
-              onChange={this.handleTextChange}
+              value={this.props.retireRate}
+              onChange={this.props.handleTextChange}
               name="retireRate"
               label="Employer Match"
               className={classes.field}
@@ -221,8 +235,8 @@ class IncomeForm extends Component<WithStyles<typeof styles>, {}> {
           </Grid>
           <Grid item xs={3}>
             <TextField
-              value={this.state.retireRateOf}
-              onChange={this.handleTextChange}
+              value={this.props.retireRateOf}
+              onChange={this.props.handleTextChange}
               name="retireRateOf"
               label=" "
               className={classes.field}
@@ -244,9 +258,9 @@ class IncomeForm extends Component<WithStyles<typeof styles>, {}> {
               <FormControl className={classes.field}>
                 <InputLabel htmlFor="tax-native">State</InputLabel>
                 <Select
-                  onChange={this.handleStateChange}
+                  onChange={this.props.handleStateChange}
                   className={classes.dropdown}
-                  value={this.state.state}
+                  value={this.props.state}
                   id='tax-state-native'
                 >
                   <MenuItem value=""><em>None</em></MenuItem>
@@ -282,4 +296,4 @@ class IncomeForm extends Component<WithStyles<typeof styles>, {}> {
   }
 }
 
-export default withStyles(styles)(IncomeForm)
+export default withStyles(styles)(connector(IncomeForm))

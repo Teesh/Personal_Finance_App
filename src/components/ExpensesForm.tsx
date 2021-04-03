@@ -77,6 +77,33 @@ class ExpensesForm extends Component<WithStyles<typeof styles>, {}> {
           <Grid container>
             <Grid item xs={6}>
               <TextField
+                value={this.state.propertyValue}
+                onChange={this.handleTextChange}
+                label="Property Value"
+                name="propertyValue"
+                className={classes.field}
+                InputProps={{startAdornment: <InputAdornment position="start">$</InputAdornment>}}
+                inputProps={{
+                  min: 0,
+                  max: 5000000,
+                  step: 10000,
+                  type: 'number'
+                }}
+              ></TextField>
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                value={this.state.rent}
+                label="Monthly Property Tax"
+                className={classes.fieldInline}
+                InputProps={{startAdornment: <InputAdornment position="start">$</InputAdornment>}}
+                disabled
+              ></TextField>
+            </Grid>
+          </Grid>
+          <Grid container>
+            <Grid item xs={6}>
+              <TextField
                 value={this.state.mortgagePay}
                 onChange={this.handleTextChange}
                 name="mortgagePay"
@@ -106,33 +133,6 @@ class ExpensesForm extends Component<WithStyles<typeof styles>, {}> {
                   step: 10,
                   type: 'number'
                 }}
-              ></TextField>
-            </Grid>
-          </Grid>
-          <Grid container>
-            <Grid item xs={6}>
-              <TextField
-                value={this.state.propertyValue}
-                onChange={this.handleTextChange}
-                label="Property Value"
-                name="propertyValue"
-                className={classes.field}
-                InputProps={{startAdornment: <InputAdornment position="start">$</InputAdornment>}}
-                inputProps={{
-                  min: 0,
-                  max: 5000000,
-                  step: 10000,
-                  type: 'number'
-                }}
-              ></TextField>
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                value={this.state.rent}
-                label="Monthly Property Tax"
-                className={classes.fieldInline}
-                InputProps={{startAdornment: <InputAdornment position="start">$</InputAdornment>}}
-                disabled
               ></TextField>
             </Grid>
           </Grid>
