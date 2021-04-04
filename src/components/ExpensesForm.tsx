@@ -1,84 +1,124 @@
 import React, { Component } from 'react'
-import { withStyles, WithStyles, createStyles } from "@material-ui/core/styles"
+import { connect, ConnectedProps } from 'react-redux'
+import { withStyles, WithStyles } from "@material-ui/core/styles"
+import styles from '../css/styles'
+import * as actionTypes from '../store/actions'
 import { 
   Grid, 
   TextField,
   InputAdornment,
   Switch,
+  Slider,
+  Typography,
+  InputLabel,
+  FormControl,
+  Select,
+  MenuItem,
 } from '@material-ui/core'
+import { monthlySavingsFormula, propertyTaxFormula, monthlyMortgageFormula } from "../helpers/taxes"
 
-const styles = createStyles({
-  inline: {
-    flexGrow: 1,
-  },
-  block: {
-    marginLeft: '20px',
-    marginRight: '20px',
-    color: 'white',
-  },
-  title: {
-    textAlign: 'center',
-    color: 'black',
-  },
-  text: {
-    color: 'white',
-    marginTop: 0
-  },
-  field: {
-    width: '100%',
-    marginTop: '10px',
-    color: 'white',
-  },
-  fieldInline: {
-    width: '100%',
-    marginTop: '10px',
-    color: 'white',
-    marginLeft: '10px'
-  },
-  label: {
-    marginBottom: '5px',
-  }
+const mapStateToProps = (state: RootState) => ({
+  homeowner: state.exp.homeowner,
+  rent: state.exp.rent,
+  rentInsurance: state.exp.rentInsurance,
+  utilities: state.exp.utilities,
+  groceries: state.exp.groceries,
+  misc: state.exp.misc,
+  mortgageRate: state.exp.mortgageRate,
+  propertyValue: state.exp.propertyValue,
+  downPayment: state.exp.downPayment,
+  mortgageLength: state.exp.mortgageLength,
+  pmiRate: state.exp.pmiRate,
+  hoaFees: state.exp.hoaFees,
+  state: state.inc.state,
+  netIncome: state.inc.netIncome,
 })
 
-class ExpensesForm extends Component<WithStyles<typeof styles>, {}> {
-  state = {
-    homeowner: false,
-    rent: 0,
-    rentInsurance: 0,
-    utilities: 0,
-    groceries: 0,
-    misc: 0,
-    mortgagePay: 0,
-    mortgageRate: 3.48,
-    propertyValue: 0,
-    hoaFees: 0,
-    hoInsurance: 0,
-  }
+const mapDispatchToProps = {
+  handleTextChange: (event: React.ChangeEvent<HTMLInputElement>) => ({ type: actionTypes.HANDLE_EXPENSES_TEXT_CHANGE, name: event.target.name, value: event.target.value }),
+  handleSliderChange: (event: React.ChangeEvent<{}>, value: number | number[]) => ({ type: actionTypes.HANDLE_EXPENSES_SLIDER_CHANGE, value: value }),
+  handleYearChange: (event: React.ChangeEvent<{ name?: string; value: unknown }>) => ({ type: actionTypes.HANDLE_YEAR_CHANGE, value: event.target.value }),
+  handleHomeownerChange: (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => ({ type: actionTypes.HANDLE_HOMEOWNER_CHANGE, value: checked })
+}
 
-  private handleHomeownerDeduct = (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
-    this.setState({
-      homeowner: checked,
-    })
-  }
-  
-  private handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    let name = event.target.name;
-    let value = event.target.value;
-    this.setState({[name]: value});
-  }
+const connector = connect(mapStateToProps, mapDispatchToProps)
+type PropsFromRedux = ConnectedProps<typeof connector>
+type Props = PropsFromRedux & WithStyles<typeof styles>
 
+const marks = [
+  {
+    value: 0,
+    label: '0%',
+  },
+  {
+    value: 25,
+    label: '5%',
+  },
+  {
+    value: 50,
+    label: '10%',
+  },
+  {
+    value: 75,
+    label: '15%',
+  },
+  {
+    value: 100,
+    label: '20%',
+  },
+]
+
+const valueLabelFormat = (value: number) => {
+  let m = marks.find((mark) => mark.value === value)
+  return m ? m.label : ''
+}
+
+const valueText = (value: number) => {
+  let text = marks.find((mark) => mark.value === value)?.label
+  return text ? text : ''
+}
+
+class ExpensesForm extends Component<Props, {}> {
   public render () {
     const { classes } = this.props
 
+    let propertyTax = propertyTaxFormula({
+      propertyValue: this.props.propertyValue,
+      state: this.props.state,
+    })
+
+    let monthlyMortgage = monthlyMortgageFormula({
+      propertyValue: this.props.propertyValue,
+      propertyTax: propertyTax,
+      mortgageRate: this.props.mortgageRate,
+      downPayment: this.props.downPayment,
+      mortgageLength: this.props.mortgageLength,
+      pmiRate: this.props.pmiRate,
+      hoaFees: this.props.hoaFees,
+    })
+
+    let monthlySavings = monthlySavingsFormula({
+      netIncome: this.props.netIncome,
+      homeowner: this.props.homeowner,
+      monthlyPropertyTax: propertyTax,
+      mortgagePay: monthlyMortgage,
+      hoaFees: this.props.hoaFees,
+      rent: this.props.rent,
+      rentInsurance: this.props.rentInsurance,
+      utilities: this.props.utilities,
+      groceries: this.props.groceries,
+      misc: this.props.misc,
+    })
+
     let housing
-    if (this.state.homeowner) {
+    if (this.props.homeowner) {
       housing = (
         <React.Fragment>
           <Grid container>
             <Grid item xs={6}>
               <TextField
-                value={this.state.propertyValue}
-                onChange={this.handleTextChange}
+                value={this.props.propertyValue}
+                onChange={this.props.handleTextChange}
                 label="Property Value"
                 name="propertyValue"
                 className={classes.field}
@@ -93,7 +133,7 @@ class ExpensesForm extends Component<WithStyles<typeof styles>, {}> {
             </Grid>
             <Grid item xs={6}>
               <TextField
-                value={this.state.rent}
+                value={propertyTax}
                 label="Monthly Property Tax"
                 className={classes.fieldInline}
                 InputProps={{startAdornment: <InputAdornment position="start">$</InputAdornment>}}
@@ -101,31 +141,15 @@ class ExpensesForm extends Component<WithStyles<typeof styles>, {}> {
               ></TextField>
             </Grid>
           </Grid>
-          <Grid container>
-            <Grid item xs={6}>
+          <Grid container spacing={1}>
+           <Grid item xs={6}>
               <TextField
-                value={this.state.mortgagePay}
-                onChange={this.handleTextChange}
-                name="mortgagePay"
-                label="Monthly Mortgage Payment"
-                className={classes.field}
-                InputProps={{startAdornment: <InputAdornment position="start">$</InputAdornment>}}
-                inputProps={{
-                  min: 0,
-                  max: 1000000,
-                  step: 10,
-                  type: 'number'
-                }}
-              ></TextField>
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                value={this.state.mortgageRate}
-                onChange={this.handleTextChange}
+                value={this.props.mortgageRate}
+                onChange={this.props.handleTextChange}
                 label="Mortgage Rate"
                 name="mortgageRate"
-                placeholder="3.48"
-                className={classes.fieldInline}
+                placeholder="3.18"
+                className={classes.field}
                 InputProps={{endAdornment: <InputAdornment position="end">%</InputAdornment>}}
                 inputProps={{
                   min: 0,
@@ -135,14 +159,65 @@ class ExpensesForm extends Component<WithStyles<typeof styles>, {}> {
                 }}
               ></TextField>
             </Grid>
+            <Grid item xs={6}>
+              <Typography id="discrete-slider-restrict" className={classes.fieldSliderLabel} gutterBottom>
+                Down Payment
+              </Typography>
+              <Slider
+                defaultValue={50}
+                valueLabelFormat={valueLabelFormat}
+                getAriaValueText={valueText}
+                onChange={this.props.handleSliderChange}
+                name="downPayment"
+                aria-labelledby="discrete-slider-restrict"
+                className={classes.fieldSlider}
+                step={null}
+                valueLabelDisplay="auto"
+                marks={marks}
+              />
+            </Grid>
+          </Grid>
+          <Grid container>
+            <Grid item xs={6} className={classes.title}>
+              <FormControl className={classes.field}>
+                <InputLabel htmlFor="mortgage-native">Mortgage Length</InputLabel>
+                <Select
+                  onChange={this.props.handleYearChange}
+                  className={classes.dropdown}
+                  value={this.props.mortgageLength}
+                  id='mortgage-length-native'
+                >
+                  <MenuItem value={30}>30 yrs</MenuItem>
+                  <MenuItem value={20}>20 yrs</MenuItem>
+                  <MenuItem value={15}>15 yrs</MenuItem>
+                  <MenuItem value={10}>10 yrs</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                value={this.props.pmiRate}
+                onChange={this.props.handleTextChange}
+                name="pmiRate"
+                label="Private Mortage Insurance Rate"
+                className={classes.fieldInline}
+                InputProps={{endAdornment: <InputAdornment position="end">%</InputAdornment>}}
+                inputProps={{
+                  min: 0,
+                  max: 5,
+                  step: 0.1,
+                  type: 'number'
+                }}
+              ></TextField>
+            </Grid>
           </Grid>
           <Grid container>
             <Grid item xs={6}>
               <TextField
-                value={this.state.hoaFees}
-                onChange={this.handleTextChange}
+                value={this.props.hoaFees}
+                onChange={this.props.handleTextChange}
                 name="hoaFees"
-                label="HOA Fees"
+                label="HOA Fees and Home Insurance"
                 className={classes.field}
                 InputProps={{startAdornment: <InputAdornment position="start">$</InputAdornment>}}
                 inputProps={{
@@ -155,18 +230,11 @@ class ExpensesForm extends Component<WithStyles<typeof styles>, {}> {
             </Grid>
             <Grid item xs={6}>
               <TextField
-                value={this.state.hoInsurance}
-                onChange={this.handleTextChange}
-                name="hoInsurance"
-                label="Monthly Homeowner's Insurance"
+                value={monthlyMortgage}
+                label="Monthly Mortgage Payment"
                 className={classes.fieldInline}
                 InputProps={{startAdornment: <InputAdornment position="start">$</InputAdornment>}}
-                inputProps={{
-                  min: 0,
-                  max: 10000,
-                  step: 10,
-                  type: 'number'
-                }}
+                disabled
               ></TextField>
             </Grid>
           </Grid>
@@ -177,8 +245,8 @@ class ExpensesForm extends Component<WithStyles<typeof styles>, {}> {
         <React.Fragment>
           <Grid item xs={12}>
             <TextField
-              value={this.state.rent}
-              onChange={this.handleTextChange}
+              value={this.props.rent}
+              onChange={this.props.handleTextChange}
               name="rent"
               label="Monthly Rent"
               className={classes.field}
@@ -193,9 +261,9 @@ class ExpensesForm extends Component<WithStyles<typeof styles>, {}> {
           </Grid>
           <Grid item xs={12}>
             <TextField
-              value={this.state.rentInsurance}
-              onChange={this.handleTextChange}
-              name="rent"
+              value={this.props.rentInsurance}
+              onChange={this.props.handleTextChange}
+              name="rentInsurance"
               label="Monthly Rental Insurance"
               className={classes.field}
               InputProps={{startAdornment: <InputAdornment position="start">$</InputAdornment>}}
@@ -218,70 +286,74 @@ class ExpensesForm extends Component<WithStyles<typeof styles>, {}> {
         </Grid>
         <Grid container alignItems="center" spacing={1}>
           <Grid item className={classes.label}>Renting</Grid>
-          <Grid item><Switch color="primary"  checked={this.state.homeowner} onChange={this.handleHomeownerDeduct}/></Grid>
+          <Grid item><Switch color="primary"  checked={this.props.homeowner} onChange={this.props.handleHomeownerChange}/></Grid>
           <Grid item className={classes.label}>Homeowner</Grid>
         </Grid>
         {housing}
-        <Grid item xs={12}>
-          <TextField
-            value={this.state.utilities}
-            onChange={this.handleTextChange}
-            name="utilities"
-            label="Montly Utilities (including cable)"
-            className={classes.field}
-            InputProps={{startAdornment: <InputAdornment position="start">$</InputAdornment>}}
-            inputProps={{
-              min: 0,
-              max: 1000000,
-              step: 10,
-              type: 'number'
-            }}
-          ></TextField>
+        <Grid container spacing={1}>
+          <Grid item xs={6}>
+            <TextField
+              value={this.props.utilities}
+              onChange={this.props.handleTextChange}
+              name="utilities"
+              label="Montly Utilities (including cable)"
+              className={classes.field}
+              InputProps={{startAdornment: <InputAdornment position="start">$</InputAdornment>}}
+              inputProps={{
+                min: 0,
+                max: 1000000,
+                step: 10,
+                type: 'number'
+              }}
+            ></TextField>
+          </Grid>
+          <Grid item xs={6}>
+            <TextField
+              value={this.props.groceries}
+              onChange={this.props.handleTextChange}
+              name="groceries"
+              label="Montly Groceries and Dining"
+              className={classes.field}
+              InputProps={{startAdornment: <InputAdornment position="start">$</InputAdornment>}}
+              inputProps={{
+                min: 0,
+                max: 1000000,
+                step: 10,
+                type: 'number'
+              }}
+            ></TextField>
+          </Grid>
         </Grid>
-        <Grid item xs={12}>
-          <TextField
-            value={this.state.groceries}
-            onChange={this.handleTextChange}
-            name="groceries"
-            label="Montly Groceries and Dining"
-            className={classes.field}
-            InputProps={{startAdornment: <InputAdornment position="start">$</InputAdornment>}}
-            inputProps={{
-              min: 0,
-              max: 1000000,
-              step: 10,
-              type: 'number'
-            }}
-          ></TextField>
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            value={this.state.misc}
-            onChange={this.handleTextChange}
-            name="misc"
-            label="Miscellaneous Costs"
-            className={classes.field}
-            InputProps={{startAdornment: <InputAdornment position="start">$</InputAdornment>}}
-            inputProps={{
-              min: 0,
-              max: 1000000,
-              step: 10,
-              type: 'number'
-            }}
-          ></TextField>
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            value={0}
-            label="Monthly Savings"
-            className={classes.field}
-            InputProps={{startAdornment: <InputAdornment position="start">$</InputAdornment>}}
-            disabled
-          ></TextField>
+        <Grid container spacing={1}>
+          <Grid item xs={6}>
+            <TextField
+              value={this.props.misc}
+              onChange={this.props.handleTextChange}
+              name="misc"
+              label="Miscellaneous Costs"
+              className={classes.field}
+              InputProps={{startAdornment: <InputAdornment position="start">$</InputAdornment>}}
+              inputProps={{
+                min: 0,
+                max: 1000000,
+                step: 10,
+                type: 'number'
+              }}
+            ></TextField>
+          </Grid>
+          <Grid item xs={6}>
+            <TextField
+              value={monthlySavings}
+              label="Monthly Savings"
+              className={classes.field}
+              InputProps={{startAdornment: <InputAdornment position="start">$</InputAdornment>}}
+              disabled
+            ></TextField>
+          </Grid>
         </Grid>
       </React.Fragment>
     )
   }
 }
 
-export default withStyles(styles)(ExpensesForm)
+export default withStyles(styles)(connector(ExpensesForm))

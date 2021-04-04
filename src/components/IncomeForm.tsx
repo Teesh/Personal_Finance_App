@@ -1,7 +1,8 @@
 import React, { Component } from 'react'
-import { compose } from 'redux'
 import { connect, ConnectedProps } from 'react-redux'
-import { withStyles, WithStyles, createStyles } from "@material-ui/core/styles"
+import { withStyles, WithStyles } from "@material-ui/core/styles"
+import styles from '../css/styles'
+import * as actionTypes from '../store/actions'
 import { 
   Grid, 
   TextField, 
@@ -19,64 +20,25 @@ import {
 } from '@material-ui/core'
 import { effectiveTaxFormula, stateTaxRates } from "../helpers/taxes"
 
-const styles = createStyles({
-  inline: {
-    flexGrow: 1,
-  },
-  text: {
-    color: 'white',
-    marginTop: 0
-  },
-  block: {
-    marginLeft: '20px',
-    marginRight: '20px',
-    color: 'white',
-  },
-  title: {
-    textAlign: 'center',
-  },
-  field: {
-    width: '100%',
-    marginTop: '10px',
-    color: 'white',
-  },
-  fieldInline: {
-    width: '100%',
-    marginTop: '10px',
-    color: 'white',
-    marginLeft: '10px'
-  },
-  dropdown: {
-    minWidth: '200px',
-    textAlign: 'left',
-  },
-  option: {
-    marginLeft: '10px',
-  },
-  slider: {
-    marginTop: '10px'
-  },
-})
-
 const mapStateToProps = (state: RootState) => ({
-  salary: state.salary,
-  married: state.married,
-  taxRate: state.taxRate,
-  state: state.state,
-  deductions: state.deductions,
-  stdDeduct: state.stdDeduct,
-  retireContributions: state.retireContributions,
-  retireRate: state.retireRate,
-  retireRateOf: state.retireRateOf,
+  salary: state.inc.salary,
+  married: state.inc.married,
+  taxRate: state.inc.taxRate,
+  state: state.inc.state,
+  deductions: state.inc.deductions,
+  stdDeduct: state.inc.stdDeduct,
+  retireContributions: state.inc.retireContributions,
+  retireRate: state.inc.retireRate,
+  retireRateOf: state.inc.retireRateOf,
 })
 
 
 const mapDispatchToProps = {
-  handleTextChange: () => ({ type: 'HANDLE_TEXT_CHANGE' }),
-  handleIncomeSliderChange: () => ({ type: 'HANDLE_INCOME_SLIDER_CHANGE' }),
-  handleMarriedChange: () => ({ type: 'HANDLE_MARRIED_CHANGE' }),
-  handleStdDeduct: () => ({ type: 'HANDLE_STD_DEDUCT_CHANGE' }),
-  handleStateChange: () => ({ type: 'HANDLE_STATE_CHANGE' }),
+  handleTextChange: (event: React.ChangeEvent<HTMLInputElement>) => ({ type: actionTypes.HANDLE_INCOME_TEXT_CHANGE, name: event.target.name, value: event.target.value }),
+  handleIncomeSliderChange: (event: React.ChangeEvent<{}>, value: number | number[]) => ({ type: actionTypes.HANDLE_INCOME_SLIDER_CHANGE, value: value }),
+  handleMarriedChange: (event: React.ChangeEvent<{}>, value: string) => ({ type: actionTypes.HANDLE_MARRIED_CHANGE, value: value }),
+  handleStdDeduct: (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => ({ type: actionTypes.HANDLE_STD_DEDUCT_CHANGE, value: checked }),
+  handleStateChange: (event: React.ChangeEvent<{ name?: string; value: unknown }>) => ({ type: actionTypes.HANDLE_STATE_CHANGE, value: event.target.value }),
 }
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
@@ -84,37 +46,6 @@ type PropsFromRedux = ConnectedProps<typeof connector>
 type Props = PropsFromRedux & WithStyles<typeof styles>
 
 class IncomeForm extends Component<Props, {}> {
-  private handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    let name = event.target.name;
-    let value = event.target.value;
-    this.setState({[name]: value});
-  }
-
-  private handleIncomeSliderChange = (event: React.ChangeEvent<{}>, value: number | number[]) => {
-    this.setState({
-      salary: value
-    })
-  }
-
-  private handleMarriedChange = (event: React.ChangeEvent<{}>, value: string) => {
-    this.setState({
-      married: value === "single" ? false : true
-    })
-  }
-
-  private handleStdDeduct = (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
-    this.setState({
-      stdDeduct: checked,
-      deductions: checked ? 12400 : 0,
-    })
-  }
-
-  private handleStateChange = (event: React.ChangeEvent<{ name?: string; value: unknown }>) => {
-    this.setState({
-      state: event.target.value
-    })
-  }
-
   public render () {
     const { classes } = this.props
 
@@ -124,8 +55,6 @@ class IncomeForm extends Component<Props, {}> {
       taxRate: this.props.taxRate,
       deductions: this.props.deductions,
       retireContributions: this.props.retireContributions,
-      retireRate: this.props.retireRate,
-      retireRateOf: this.props.retireRateOf,
     })
 
     return (
@@ -212,8 +141,8 @@ class IncomeForm extends Component<Props, {}> {
               InputProps={{startAdornment: <InputAdornment position="start">$</InputAdornment>}}
               inputProps={{
                 min: 0,
-                max: 1000000,
-                step: 10000,
+                max: 19500,
+                step: 100,
                 type: 'number'
               }}
             ></TextField>
@@ -285,6 +214,8 @@ class IncomeForm extends Component<Props, {}> {
         <Grid item xs={12}>
           <TextField
             value={netpay}
+            onChange={this.props.handleTextChange}
+            name="netIncome"
             label="Net Household Income"
             className={classes.field}
             InputProps={{startAdornment: <InputAdornment position="start">$</InputAdornment>}}

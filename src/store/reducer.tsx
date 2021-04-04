@@ -1,27 +1,10 @@
-import { AnyAction } from 'redux'
+import { combineReducers } from 'redux'
+import incomeReducer from './reducers/incomeFormReducer'
+import expensesReducer from './reducers/expensesFormReducer'
 
-const initialState: RootState = {
-  salary: 50000,
-  married: false,
-  taxRate: 25,
-  state: '',
-  deductions: 0,
-  stdDeduct: false,
-  retireContributions: 0,
-  retireRate: 0,
-  retireRateOf: 0,
-}
+const rootReducer = combineReducers({
+  inc: incomeReducer,
+  exp: expensesReducer,
+})
 
-const reducer = (state: RootState = initialState, action: AnyAction) => {
-  if (action.type === "HANDLE_TEXT_CHANGE") {
-    let name = action.name;
-    let value = action.value;
-    let newState = {
-      ...state,
-      [name]: value,
-    }
-    return state
-  }
-}
-
-export default reducer
+export default rootReducer
